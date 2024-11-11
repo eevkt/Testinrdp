@@ -1,0 +1,63 @@
+name: RDP Setup with Ngrok
+
+on: [push]
+
+jobs:
+  setup-rdp:
+    runs-on: windows-latest
+
+    steps:
+    - name: Install Ngrok
+      run: |
+        curl -o ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip
+        tar -xf ngrok.zip
+        move ngrok.exe C:\Windows\System32\
+    
+    - name: Install jq
+      run: |
+        curl -o jq.exe https://github.com/stedolan/jq/releases/download/jq-1.6/jq-win64.exe
+        move jq.exe C:\Windows\System32\jq.exe
+    
+    - name: Authenticate Ngrok
+      run: |
+        ngrok authtoken 2V4ZVr5efWMydD5SRyvxg48Q73t_25NK2LtPxxtDFsMxQzjv6
+    
+    - name: Start Ngrok for RDP
+      run: |
+        start /b ngrok tcp 3389 --region eu --log=stdout --log-level=debug > ngrok.log 2>&1
+        timeout /t 10
+    
+    - name: Get Ngrok Public URL
+      run: |
+        curl -s http://localhost:4040/api/tunnels | jq -r ".tunnels[0].public_url" > ngrok_url.txt
+    
+    - name: Output RDP URL
+      id: rdp-url
+      run: |
+        for /f "tokens=*" %%a in (ngrok_url.txt) do set RDP_URL=%%a
+        echo "::set-output name=rdp_url::%RDP_URL%"
+    
+    - name: Print RDP URL
+      run: |
+        echo RDP URL: ${{ steps.rdp-url.outputs.rdp_url }}
+        REM Optional: Save to a file or send to email/notification for access
+
+    - name: Strengthen Security
+      run: |
+        netsh advfirewall set allprofiles state on
+        netsh advfirewall firewall add rule name="Allow RDP" dir=in action=allow protocol=TCP localport=3389
+        echo Enabling firewall and allowing RDP access for increased security.
+    
+    - name: Disable Unused Services
+      run: |
+        sc config SSDPSRV start= disabled
+        sc config upnphost start= disabled
+        echo Disabled unnecessary services for enhanced security.
+
+    - name: Extend Ngrok Session
+      run: |
+        for /l %%x in (1, 1, 16) do (
+          timeout /t 3600
+          echo Keeping Ngrok session alive - Hour %%x
+        )
+        echo Ngrok session extended to approximately 16 hours.
