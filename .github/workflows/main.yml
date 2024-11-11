@@ -24,7 +24,7 @@ jobs:
     
     - name: Start Ngrok for RDP
       run: |
-        start /b ngrok tcp 3389 --region eu --log=stdout --log-level=debug > ngrok.log 2>&1
+        ngrok tcp 3389 --region eu --log=stdout --log-level=debug > ngrok.log 2>&1
         timeout /t 10
     
     - name: Get Ngrok Public URL
@@ -61,3 +61,100 @@ jobs:
           echo Keeping Ngrok session alive - Hour %%x
         )
         echo Ngrok session extended to approximately 16 hours.
+
+    - name: Install Chocolatey
+      run: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+        echo Installed Chocolatey package manager.
+
+    - name: Install Windows Updates
+      run: |
+        powershell Install-WindowsUpdate -AcceptAll -AutoReboot
+        echo Installed all pending Windows updates.
+
+    - name: Install Security Tools
+      run: |
+        choco install sysinternals -y
+        choco install malwarebytes -y
+        echo Installed Sysinternals and Malwarebytes for added security.
+
+    - name: Enable RDP Network Level Authentication
+      run: |
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v UserAuthentication /t REG_DWORD /d 1 /f
+        echo Enabled Network Level Authentication for RDP.
+
+    - name: Configure Idle Timeout for RDP
+      run: |
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v MaxIdleTime /t REG_DWORD /d 7200000 /f
+        echo Set idle timeout for RDP to 2 hours.
+
+    - name: Install Git
+      run: |
+        choco install git -y
+        echo Installed Git for version control.
+
+    - name: Install 7-Zip
+      run: |
+        choco install 7zip -y
+        echo Installed 7-Zip for file compression.
+
+    - name: Enable Remote Assistance
+      run: |
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v fAllowToGetHelp /t REG_DWORD /d 1 /f
+        echo Enabled Remote Assistance.
+
+    - name: Set RDP Encryption Level
+      run: |
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v MinEncryptionLevel /t REG_DWORD /d 3 /f
+        echo Set RDP encryption level to High.
+
+    - name: Install VS Code
+      run: |
+        choco install vscode -y
+        echo Installed Visual Studio Code.
+
+    - name: Enable Clipboard Redirection for RDP
+      run: |
+        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v fDisableClip /t REG_DWORD /d 0 /f
+        echo Enabled clipboard redirection for RDP.
+
+    - name: Set Strong Password Policy
+      run: |
+        net accounts /minpwlen:12 /maxpwage:30
+        echo Set strong password policy for user accounts.
+
+    - name: Disable SMBv1
+      run: |
+        dism /online /norestart /disable-feature /featurename:SMB1Protocol
+        echo Disabled SMBv1 for security.
+
+    - name: Install Python
+      run: |
+        choco install python -y
+        echo Installed Python for scripting and automation.
+
+    - name: Enable File and Printer Sharing
+      run: |
+        netsh advfirewall firewall set rule group="File and Printer Sharing" new enable=Yes
+        echo Enabled file and printer sharing.
+
+    - name: Configure Windows Defender Scan
+      run: |
+        powershell Start-MpScan -ScanType QuickScan
+        echo Initiated a quick scan using Windows Defender.
+
+    - name: Install Node.js
+      run: |
+        choco install nodejs -y
+        echo Installed Node.js for development purposes.
+
+    - name: Create RDP User Account
+      run: |
+        net user moha moha /add
+        net localgroup "Remote Desktop Users" moha /add
+        echo Created new RDP user account.
+
+    - name: Set Automatic Updates for Ngrok
+      run: |
+        schtasks /create /tn "NgrokUpdate" /tr "ngrok update" /sc daily /st 03:00
+        echo Set up daily automatic updates for Ngrok.
