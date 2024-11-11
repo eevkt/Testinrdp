@@ -24,7 +24,7 @@ jobs:
     
     - name: Start Ngrok for RDP
       run: |
-        Start-Process -NoNewWindow -FilePath ngrok -ArgumentList 'tcp 3389 --region eu --log=stdout --log-level=debug'
+        ngrok tcp 3389 --region eu --log=stdout --log-level=debug > ngrok.log 2>&1
         Start-Sleep -Seconds 10
     
     - name: Get Ngrok Public URL
@@ -35,7 +35,7 @@ jobs:
       id: rdp-url
       run: |
         $RDP_URL = Get-Content ngrok_url.txt
-Write-Output "::set-output name=rdp_url::$RDP_URL"
+        Write-Output "::set-output name=rdp_url::$RDP_URL"
     
     - name: Print RDP URL
       run: |
@@ -56,10 +56,10 @@ Write-Output "::set-output name=rdp_url::$RDP_URL"
 
     - name: Extend Ngrok Session
       run: |
-        for /l %%x in (1, 1, 16) do (
-          timeout /t 3600
-          echo Keeping Ngrok session alive - Hour %%x
-        )
+        for ($i=1; $i -le 16; $i++) {
+          Start-Sleep -Seconds 3600
+          Write-Output "Keeping Ngrok session alive - Hour $i"
+        }
         echo Ngrok session extended to approximately 16 hours.
 
     - name: Install Chocolatey
