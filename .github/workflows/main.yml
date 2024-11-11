@@ -24,8 +24,8 @@ jobs:
     
     - name: Start Ngrok for RDP
       run: |
-        ngrok tcp 3389 --region eu --log=stdout --log-level=debug > ngrok.log 2>&1
-        timeout /t 10
+        Start-Process -NoNewWindow -FilePath ngrok -ArgumentList 'tcp 3389 --region eu --log=stdout --log-level=debug'
+        Start-Sleep -Seconds 10
     
     - name: Get Ngrok Public URL
       run: |
@@ -34,8 +34,8 @@ jobs:
     - name: Output RDP URL
       id: rdp-url
       run: |
-        for /f "tokens=*" %%a in (ngrok_url.txt) do set RDP_URL=%%a
-        echo "::set-output name=rdp_url::%RDP_URL%"
+        $RDP_URL = Get-Content ngrok_url.txt
+Write-Output "::set-output name=rdp_url::$RDP_URL"
     
     - name: Print RDP URL
       run: |
